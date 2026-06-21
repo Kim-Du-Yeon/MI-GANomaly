@@ -31,6 +31,8 @@ PATIENCE = 15
 
 def build_trial_opt(trial):
     opt = get_options()
+    opt.dataroot = 'mi_ganomaly/data/train_augmented'
+    opt.workers = 0  # Windows 멀티프로세싱 이슈 방지
     opt.isize = 64
     opt.batchsize = 64
     opt.n_epochs = N_EPOCHS
@@ -51,6 +53,14 @@ def train_one_trial(opt, trial, device):
     set_seed(42)
 
     train_loader, _ = get_dataloader(opt, 'train')
+    n_train = len(train_loader.dataset)
+    print(f'[data check] dataroot={opt.dataroot} train/normal images={n_train}')
+    if n_train == 0:
+        raise FileNotFoundError(
+            f'train 이미지를 찾을 수 없습니다: {os.path.join(opt.dataroot, "train", "normal")} '
+            f'경로와 이미지 존재 여부를 확인하세요.'
+        )
+
     test_loader, test_labels = get_dataloader(opt, 'test')
 
     model = GANomaly(opt)
