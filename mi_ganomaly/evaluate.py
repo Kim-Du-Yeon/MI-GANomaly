@@ -128,7 +128,7 @@ def main():
     device = torch.device(opt.device if torch.cuda.is_available() else 'cpu')
 
     model = GANomaly(opt)
-    model.criterion = TotalLoss(opt, recon_alpha=1.0)  # Phase 1 baseline과 동일 기준
+    model.criterion = TotalLoss(opt, recon_alpha=0.5)  # Phase 3: MSE 0.5 + SSIM 0.5
     model = model.to(device)
 
     ckpt_path = os.path.join(opt.save_dir, 'best_model.pth')

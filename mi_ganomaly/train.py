@@ -45,7 +45,7 @@ def main():
     test_loader, test_labels = get_dataloader(opt, 'test')
 
     model = GANomaly(opt)
-    model.criterion = TotalLoss(opt, recon_alpha=1.0)  # Phase 1 baseline: MSE only
+    model.criterion = TotalLoss(opt, recon_alpha=0.5)  # Phase 3: MSE 0.5 + SSIM 0.5
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
