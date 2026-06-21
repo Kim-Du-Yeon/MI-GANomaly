@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# virtual environment
+.venv/
+
+# training outputs
+output/
+
+# ELPV dataset images (folder structure kept via .gitkeep)
+mi_ganomaly/data/**/*.jpg
+mi_ganomaly/data/**/*.jpeg
+mi_ganomaly/data/**/*.png
+mi_ganomaly/data/**/*.bmp
