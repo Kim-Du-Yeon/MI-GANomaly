@@ -191,3 +191,22 @@
 
 ### 재현성
 - mi_ganomaly/utils/reproducibility.py의 set_seed(42)를 train.py, evaluate.py에 적용 (torch/cuda/numpy/random/cudnn 전부 고정)
+
+## 학습 안정화 기술 적용 (Week 2)
+### 적용 배경
+보조 기술은 핵심 주장(마스킹+Loss 재설계)과 독립적으로
+안정적인 실험 환경 구축을 위해 한번에 적용
+
+### 적용 기술
+| 기술 | 문제 | 해결 | 비고 |
+|------|------|------|------|
+| GroupNorm(8) | 소배치 BatchNorm 불안정 | 배치 무관 정규화 | networks.py |
+| Dropout(0.3) | 정상만 학습 → 과적합 | Encoder 정규화 | networks.py |
+| Weight Decay(1e-4) | 가중치 폭발 | L2 정규화 | optimizer |
+| CosineAnnealingLR | 후반 lr 불안정 | 점진적 감소 | train.py |
+| Gradient Clipping(1.0) | gradient 폭발 | norm 제한 | train.py |
+| Early Stopping(20) | 과적합/낭비 | AUC 기준 자동 종료 | train.py |
+
+### 포트폴리오 서술 방침
+- 보조 기술: 한 문단으로 묶어 처리
+- Loss ablation: 별도 섹션에서 단계별 수치 비교 (핵심)

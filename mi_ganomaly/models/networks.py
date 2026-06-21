@@ -14,17 +14,25 @@ class Encoder(nn.Module):
 
         for t in range(extralayers):
             main.add_module(f'extra-{t}-conv', nn.Conv2d(cndf, cndf, 3, 1, 1, bias=False))
-            main.add_module(f'extra-{t}-bn', nn.BatchNorm2d(cndf))
+            # GroupNorm: 소배치(64)에서 BatchNorm 통계 불안정 문제 해결
+            main.add_module(f'extra-{t}-bn', nn.GroupNorm(8, cndf))
             main.add_module(f'extra-{t}-relu', nn.LeakyReLU(0.2, inplace=True))
 
         while csize > 4:
             in_feat, out_feat = cndf, cndf * 2
             main.add_module(f'pyramid-{in_feat}-{out_feat}-conv', nn.Conv2d(in_feat, out_feat, 4, 2, 1, bias=False))
-            main.add_module(f'pyramid-{out_feat}-bn', nn.BatchNorm2d(out_feat))
+            # GroupNorm: 소배치(64)에서 BatchNorm 통계 불안정 문제 해결
+            main.add_module(f'pyramid-{out_feat}-bn', nn.GroupNorm(8, out_feat))
             main.add_module(f'pyramid-{out_feat}-relu', nn.LeakyReLU(0.2, inplace=True))
             cndf, csize = cndf * 2, csize / 2
 
+        # Dropout: 정상만 학습하는 Semi-Supervised 구조 과적합 방지 (마지막 두 Conv 이후)
+        main.add_module('dropout-1', nn.Dropout(p=0.3))
+
         main.add_module('final-conv', nn.Conv2d(cndf, nz, 4, 1, 0, bias=False))
+
+        # Dropout: 정상만 학습하는 Semi-Supervised 구조 과적합 방지 (마지막 두 Conv 이후)
+        main.add_module('dropout-2', nn.Dropout(p=0.3))
 
         self.main = main
 
@@ -43,19 +51,22 @@ class Decoder(nn.Module):
 
         main = nn.Sequential()
         main.add_module('initial-convt', nn.ConvTranspose2d(nz, cngf, 4, 1, 0, bias=False))
-        main.add_module('initial-bn', nn.BatchNorm2d(cngf))
+        # GroupNorm: 소배치(64)에서 BatchNorm 통계 불안정 문제 해결
+        main.add_module('initial-bn', nn.GroupNorm(8, cngf))
         main.add_module('initial-relu', nn.ReLU(True))
 
         csize = 4
         while csize < isize // 2:
             main.add_module(f'pyramid-{cngf}-convt', nn.ConvTranspose2d(cngf, cngf // 2, 4, 2, 1, bias=False))
-            main.add_module(f'pyramid-{cngf // 2}-bn', nn.BatchNorm2d(cngf // 2))
+            # GroupNorm: 소배치(64)에서 BatchNorm 통계 불안정 문제 해결
+            main.add_module(f'pyramid-{cngf // 2}-bn', nn.GroupNorm(8, cngf // 2))
             main.add_module(f'pyramid-{cngf // 2}-relu', nn.ReLU(True))
             cngf, csize = cngf // 2, csize * 2
 
         for t in range(extralayers):
             main.add_module(f'extra-{t}-conv', nn.Conv2d(cngf, cngf, 3, 1, 1, bias=False))
-            main.add_module(f'extra-{t}-bn', nn.BatchNorm2d(cngf))
+            # GroupNorm: 소배치(64)에서 BatchNorm 통계 불안정 문제 해결
+            main.add_module(f'extra-{t}-bn', nn.GroupNorm(8, cngf))
             main.add_module(f'extra-{t}-relu', nn.LeakyReLU(0.2, inplace=True))
 
         main.add_module('final-convt', nn.ConvTranspose2d(cngf, nc, 4, 2, 1, bias=False))
@@ -80,13 +91,15 @@ class Discriminator(nn.Module):
 
         for t in range(extralayers):
             features.add_module(f'extra-{t}-conv', nn.Conv2d(cndf, cndf, 3, 1, 1, bias=False))
-            features.add_module(f'extra-{t}-bn', nn.BatchNorm2d(cndf))
+            # GroupNorm: 소배치(64)에서 BatchNorm 통계 불안정 문제 해결
+            features.add_module(f'extra-{t}-bn', nn.GroupNorm(8, cndf))
             features.add_module(f'extra-{t}-relu', nn.LeakyReLU(0.2, inplace=True))
 
         while csize > 4:
             in_feat, out_feat = cndf, cndf * 2
             features.add_module(f'pyramid-{in_feat}-{out_feat}-conv', nn.Conv2d(in_feat, out_feat, 4, 2, 1, bias=False))
-            features.add_module(f'pyramid-{out_feat}-bn', nn.BatchNorm2d(out_feat))
+            # GroupNorm: 소배치(64)에서 BatchNorm 통계 불안정 문제 해결
+            features.add_module(f'pyramid-{out_feat}-bn', nn.GroupNorm(8, out_feat))
             features.add_module(f'pyramid-{out_feat}-relu', nn.LeakyReLU(0.2, inplace=True))
             cndf, csize = cndf * 2, csize / 2
 

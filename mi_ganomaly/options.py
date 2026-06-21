@@ -16,8 +16,11 @@ def get_options():
     parser.add_argument('--batchsize', type=int, default=64, help='batch size')
     parser.add_argument('--lr', type=float, default=0.0002, help='learning rate')
     parser.add_argument('--beta1', type=float, default=0.5, help='adam beta1')
-    parser.add_argument('--n_epochs', type=int, default=50, help='number of training epochs')
+    parser.add_argument('--n_epochs', type=int, default=200, help='number of training epochs')
     parser.add_argument('--device', type=str, default='cuda', help='device: cuda or cpu')
+    parser.add_argument('--weight_decay', type=float, default=1e-4, help='optimizer weight decay (L2)')
+    parser.add_argument('--max_norm', type=float, default=1.0, help='gradient clipping max norm')
+    parser.add_argument('--patience', type=int, default=20, help='early stopping patience (epochs, monitor=AUC)')
 
     # 데이터
     parser.add_argument('--dataset', type=str, default='elpv', help='dataset name')

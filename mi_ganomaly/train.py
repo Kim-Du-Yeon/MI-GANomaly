@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import torch
 from sklearn.metrics import roc_auc_score
 from torch import optim
+from torch.nn.utils import clip_grad_norm_
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from models.ganomaly import GANomaly
 from models.loss import TotalLoss
@@ -49,7 +51,11 @@ def main():
     model = GANomaly(opt)
     model.criterion = TotalLoss(opt, recon_alpha=0.5)  # Phase 3: MSE 0.5 + SSIM 0.5
     model = model.to(device)
-    optimizer = optim.Adam(model.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+    # Weight Decay: L2 정규화로 가중치 폭발 방지
+    optimizer = optim.Adam(model.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999),
+                            weight_decay=opt.weight_decay)
+    # CosineAnnealing: 학습 후반 lr 점진적 감소로 미세 수렴
+    scheduler = CosineAnnealingLR(optimizer, T_max=opt.n_epochs, eta_min=1e-6)
 
     masker = None
     if opt.mask_type != 'none':
@@ -60,6 +66,9 @@ def main():
 
     history = {'total': [], 'recon': [], 'ctx': [], 'enc': []}
     best_auc = -1.0
+    best_epoch = 0
+    epochs_no_improve = 0
+    converged_epoch = opt.n_epochs
 
     for epoch in range(opt.n_epochs):
         model.train()
@@ -74,6 +83,8 @@ def main():
 
             optimizer.zero_grad()
             total.backward()
+            # Gradient Clipping: G+E+D 복잡 구조 gradient 폭발 방지
+            clip_grad_norm_(model.parameters(), max_norm=opt.max_norm)
             optimizer.step()
 
             running['total'] += total.item()
@@ -85,6 +96,8 @@ def main():
                 print(f'[Epoch {epoch + 1}/{opt.n_epochs}][{i + 1}/{len(train_loader)}] '
                       f'total={total.item():.4f} recon={l_recon.item():.4f} '
                       f'ctx={l_ctx.item():.4f} enc={l_enc.item():.4f}')
+
+        scheduler.step()
 
         n_batches = max(len(train_loader), 1)
         for k in history:
@@ -101,9 +114,26 @@ def main():
 
         if auc > best_auc:
             best_auc = auc
+            best_epoch = epoch + 1
+            epochs_no_improve = 0
             torch.save(model.state_dict(), os.path.join(opt.save_dir, 'best_model.pth'))
+        else:
+            epochs_no_improve += 1
+
+        # Early Stopping: 최적 수렴점 자동 탐지, 과적합 방지
+        if epochs_no_improve >= opt.patience:
+            converged_epoch = epoch + 1
+            print(f'[Early Stopping] AUC 개선 없음 {opt.patience} epoch 연속 '
+                  f'(best_epoch={best_epoch}, best_auc={best_auc:.4f}) -> epoch {converged_epoch}에서 종료')
+            break
+    else:
+        converged_epoch = opt.n_epochs
 
     plot_loss_curve(history, opt.save_dir)
+
+    with open(os.path.join(opt.save_dir, 'convergence.txt'), 'w') as f:
+        f.write(f'converged_epoch={converged_epoch}\nbest_epoch={best_epoch}\nbest_auc={best_auc:.4f}\n')
+    print(f'[Convergence] converged_epoch={converged_epoch} best_epoch={best_epoch} best_auc={best_auc:.4f}')
 
 
 if __name__ == '__main__':
