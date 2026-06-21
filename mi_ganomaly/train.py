@@ -88,6 +88,9 @@ def main():
         for k in history:
             history[k].append(running[k] / n_batches)
 
+        print(f'[Epoch {epoch + 1}/{opt.n_epochs}] avg total={history["total"][-1]:.4f} '
+              f'recon={history["recon"][-1]:.4f} ctx={history["ctx"][-1]:.4f} enc={history["enc"][-1]:.4f}')
+
         scores = compute_latent_scores(model, test_loader, device)
         auc = roc_auc_score(test_labels.numpy(), scores.numpy())
         print(f'[Epoch {epoch + 1}/{opt.n_epochs}] test AUC={auc:.4f}')

@@ -54,10 +54,13 @@ class ELPVDataset(Dataset):
 
 
 def get_dataloader(opt, split):
+    persistent_workers = opt.workers > 0
+
     if split == 'train':
         dataset = ELPVDataset(opt.dataroot, split='train', label=0, isize=opt.isize, nc=opt.nc)
         labels = torch.zeros(len(dataset), dtype=torch.long)
-        loader = DataLoader(dataset, batch_size=opt.batchsize, shuffle=True, num_workers=opt.workers)
+        loader = DataLoader(dataset, batch_size=opt.batchsize, shuffle=True, num_workers=opt.workers,
+                             persistent_workers=persistent_workers, pin_memory=True)
 
     elif split == 'test':
         normal_ds = ELPVDataset(opt.dataroot, split='test', label=0, isize=opt.isize, nc=opt.nc)
@@ -67,7 +70,8 @@ def get_dataloader(opt, split):
             torch.zeros(len(normal_ds), dtype=torch.long),
             torch.ones(len(anomaly_ds), dtype=torch.long),
         ])
-        loader = DataLoader(dataset, batch_size=opt.batchsize, shuffle=False, num_workers=opt.workers)
+        loader = DataLoader(dataset, batch_size=opt.batchsize, shuffle=False, num_workers=opt.workers,
+                             persistent_workers=persistent_workers, pin_memory=True)
 
     else:
         raise ValueError(f'unknown split: {split}')
