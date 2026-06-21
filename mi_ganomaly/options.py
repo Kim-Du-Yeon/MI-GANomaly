@@ -39,6 +39,8 @@ def get_options():
     parser.add_argument('--w_recon', type=float, default=1.0, help='reconstruction loss weight')
     parser.add_argument('--w_ctx', type=float, default=1.0, help='contextual loss weight')
     parser.add_argument('--w_enc', type=float, default=1.0, help='encoder loss weight')
+    parser.add_argument('--recon_alpha', type=float, default=1.0,
+                         help='ReconLoss MSE/SSIM blend: 1.0=MSE only, 0.5=MSE+SSIM')
 
     # 평가 (Threshold)
     parser.add_argument('--k', type=float, default=2.0, help='auto threshold: mu + k*sigma')

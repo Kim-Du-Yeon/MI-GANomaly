@@ -11,6 +11,9 @@ __pycache__/
 # training outputs
 output/
 
+# WandB local run logs
+wandb/
+
 # ELPV dataset images (folder structure kept via .gitkeep)
 mi_ganomaly/data/**/*.jpg
 mi_ganomaly/data/**/*.jpeg

@@ -54,7 +54,7 @@ def main():
     test_loader, test_labels = get_dataloader(opt, 'test')
 
     model = GANomaly(opt)
-    model.criterion = TotalLoss(opt, recon_alpha=0.5)  # Phase 3: MSE 0.5 + SSIM 0.5
+    model.criterion = TotalLoss(opt, recon_alpha=opt.recon_alpha)
     model = model.to(device)
     # Weight Decay: L2 정규화로 가중치 폭발 방지
     optimizer = optim.Adam(model.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999),
