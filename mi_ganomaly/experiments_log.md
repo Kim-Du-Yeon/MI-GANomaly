@@ -265,3 +265,49 @@ Contextual Loss 활성화의 필수 조건임을 증명한다."
 - 변경 전: mask_type=none으로 Loss Ablation
 - 변경 후: mask_type=patch (mask_size=8, ratio=0.2) 고정 후 Loss Ablation
 - 가중치: w_ctx/w_enc 1.0으로 원복 (마스킹으로 스케일 문제 해소)
+
+## Loss Ablation v3 결과 및 분석
+
+### 순정 결과 (w_recon=1.0, w_ctx=1.0, w_enc=1.0)
+| Step | Loss 구성 | best AUC | 수렴 epoch |
+|------|----------|---------|-----------|
+| 1 | MSE only | 0.6575 | 25 |
+| 2 | MSE+SSIM | 0.6529 | 31 |
+| 3 | MSE+SSIM+Ctx | 0.6529 | 31 |
+| 4 | MSE+SSIM+Ctx+Enc (완성형) | 0.6529 | 31 |
+
+### 순정 상태 한계 원인 분석
+#### Loss 스케일 불균형
+- recon_loss: 0.14 (픽셀 공간 MSE+SSIM → 절대값 큼)
+- ctx_loss: 0.00028 (feature map L1 → 절대값 극소)
+- enc_loss: 0.00683 (latent MSE → 절대값 극소)
+- 스케일 차이: recon이 ctx 대비 500배, enc 대비 20배
+
+#### gradient 지배 문제
+- w=1.0 동일 가중치여도 recon_loss gradient가 학습 독점
+- ctx/enc loss는 backprop에서 실질적 기여 0에 수렴
+- 결과: Loss 조합 변경(Step 2~4)해도 AUC 변화 없음
+
+#### 이론적 균형 가중치 vs 실험값
+- 이론값: w_ctx≈1500, w_enc≈17 (스케일 완전 균형)
+- 1차 시도: w_ctx=10, w_enc=5 → 부족
+- 2차 시도: w_ctx=100, w_enc=10 → ctx_loss=0으로 소멸 (과도)
+- 결론: 단순 가중치 상향으로는 해결 어려움
+  → Loss 정규화 또는 gradient 균형 기법 필요
+
+#### 마스킹과 ctx_loss 관계
+- mask_type=none: ctx_loss=0.0 (feat_real≈feat_fake)
+- mask_type=patch: ctx_loss=0.00028 (마스킹으로 차이 발생)
+- 마스킹이 ctx_loss 활성화의 필수 조건임을 실험적 확인
+
+### 포트폴리오 서술 포인트
+"단순 Loss 추가만으로는 성능 개선이 보장되지 않음을 확인.
+Loss 스케일 불균형으로 인해 ctx/enc Loss가 gradient에
+기여하지 못하는 구조적 문제를 발견하고,
+이를 해결하기 위한 가중치 정규화 전략을 도출했다."
+
+### 다음 단계
+- Loss 정규화 방식 검토:
+  1. w_ctx=50, w_enc=5 절충값 재실험
+  2. Loss 정규화 (각 loss를 초기값으로 나눠 스케일 통일)
+  3. gradient 균형 기법 (GradNorm) 적용 검토
