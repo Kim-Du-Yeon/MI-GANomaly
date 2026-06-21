@@ -356,3 +356,27 @@ Loss 스케일 불균형으로 인해 ctx/enc Loss가 gradient에
 "20회 Bayesian Optimization으로 최적 하이퍼파라미터 도출.
 순정 AUC 0.66 → Optuna 탐색 후 AUC 0.71 달성.
 특히 lr=1e-05, w_enc=16이 핵심 기여 파라미터임을 확인."
+
+## 최종 학습 결과 (output/final_best)
+### 설정
+- best Optuna 파라미터 적용
+- w_ctx=8.46, w_enc=16.31, recon_alpha=0.793, lr=1.16e-05, mask_ratio=0.288
+- isize=64, batchsize=64, seed=42, patience=20
+
+### 결과
+- best AUC: 0.7061 (epoch 2)
+- 수렴: epoch 22 (Early Stopping)
+- ctx_loss: 0.00079 (순정 0.00028 대비 2.8배 향상)
+- enc_loss: 0.01315 (순정 0.00683 대비 1.9배 향상)
+
+### Before/After 최종 비교
+| 단계 | AUC | 주요 변경 |
+|------|-----|---------|
+| Phase 1 원본 | 0.5096 | isize=32, 증강없음, 순정 |
+| Phase 3 원본 | 0.6230 | SSIM 추가 |
+| 증강+안정화 | 0.6796 | isize=64, 증강 2712장 |
+| Optuna 최적화 | 0.7061 | 베이지안 탐색 적용 |
+
+### 이슈
+- best_epoch=2: lr=1.16e-05가 너무 낮아 초반 수렴 후 정체
+- 향후 lr 범위 재조정 필요 (1e-05 ~ 1e-04)
