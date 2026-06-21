@@ -176,5 +176,18 @@
 ### 이슈
 - pixel_dist_after.png에서 intensity=0 부근에 스파이크 발생 → RandomRotation의 회전 후 빈 모서리가 검은색(fill=0)으로 채워지는 부작용. 실제 결함 판단에 영향 줄 수 있어 Phase 6 이후 fill 값 조정 검토 필요
 
+### 이슈 해결: Rotation 검은 모서리 제거
+- 원인: RandomRotation(15)이 fill=0(검정)으로 회전 후 빈 모서리를 채움 → pixel_dist_after.png에 intensity=0 스파이크로 나타남
+- 조치: rotate 기법을 `Resize(32) → RandomRotation(15) → CenterCrop(28) → Resize(32)` 체인으로 교체
+  - CenterCrop(28)/Resize(32)는 32×32 작업 해상도를 전제로 한 보정값이라, 원본(300×300) 입력에 의미가 통하도록 맨 앞에 Resize(32)를 추가함 (rotate 기법에 한정, 다른 기법/원본 보존본은 기존 해상도 유지)
+- 검증: 재실행 후 pixel_dist_after.png에서 intensity=0 스파이크 완전히 사라짐, samples_rotate.png에서도 검은 삼각 모서리 미관측
+
+### 학습 데이터 경로 구성
+- mi_ganomaly/data/train_augmented/ 신설, Windows 디렉토리 정션(junction)으로 연결 (관리자 권한 불필요, 파일 복사 없이 단일 소스 유지)
+  - train/normal → mi_ganomaly/data/train/normal_augmented (2,712장)
+  - test/normal → mi_ganomaly/data/test/normal (1,056장, 원본 그대로)
+  - test/anomaly → mi_ganomaly/data/test/anomaly (1,116장, 원본 그대로)
+- dataloader.py는 opt.dataroot를 그대로 받아 경로를 구성하므로 코드 수정 없이 `--dataroot mi_ganomaly/data/train_augmented`와 기존 `--dataroot mi_ganomaly/data` 모두 호환됨 (둘 다 실제 로딩 검증 완료)
+
 ### 재현성
 - mi_ganomaly/utils/reproducibility.py의 set_seed(42)를 train.py, evaluate.py에 적용 (torch/cuda/numpy/random/cudnn 전부 고정)

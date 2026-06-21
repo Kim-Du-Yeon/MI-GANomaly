@@ -12,7 +12,12 @@ from torchvision import transforms
 TECHNIQUES = {
     'hflip': transforms.RandomHorizontalFlip(p=0.5),                              # 패널 좌우 대칭 가능
     'vflip': transforms.RandomVerticalFlip(p=0.5),                                # 패널 상하 대칭 가능
-    'rotate': transforms.RandomRotation(degrees=15),                             # 촬영 각도 미세 변동
+    'rotate': transforms.Compose([                                                # 촬영 각도 미세 변동
+        transforms.Resize((32, 32)),
+        transforms.RandomRotation(degrees=15),   # fill=0(검정) 모서리 발생
+        transforms.CenterCrop(28),               # 검정 모서리 영역 제거
+        transforms.Resize((32, 32)),             # 원래 작업 해상도로 복원
+    ]),
     'blur': transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 0.5)),            # 카메라 초점 변동
     'colorjitter': transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.0),  # 조명 변동만
 }
