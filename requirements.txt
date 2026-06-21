@@ -14,6 +14,8 @@ narwhals==2.22.1
 networkx==3.6.1
 numpy==2.4.4
 opencv-python==4.13.0.92
+optuna  # 베이지안 하이퍼파라미터 탐색
+optuna-integration  # WandB 등 외부 트래커 연동
 packaging==26.2
 pillow==12.2.0
 pyparsing==3.3.2

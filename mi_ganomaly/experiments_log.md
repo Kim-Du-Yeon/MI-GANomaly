@@ -318,3 +318,11 @@ Loss 스케일 불균형으로 인해 ctx/enc Loss가 gradient에
 - 근거: v3에서 ctx/enc gradient 기여 0 확인 → 절충값 적용
 - mask_type=patch, mask_size=8, ratio=0.2 고정
 - isize=64, seed=42 고정
+
+## Optuna 베이지안 최적화 도입
+### 도입 이유
+- 수동 가중치 튜닝 한계 확인 (v3, v4 실패)
+- ctx_loss 스케일 문제: 단순 가중치로 해결 불가
+- 탐색 공간: w_ctx(1~500), w_enc(1~50), recon_alpha(0.3~1.0), lr(1e-5~5e-4), mask_ratio(0.1~0.4)
+- 방법론: Bayesian Optimization (TPE Sampler)
+- 포트폴리오 서술: "체계적 하이퍼파라미터 탐색으로 최적 조합 도출"
