@@ -13,6 +13,7 @@ from models.ganomaly import GANomaly
 from models.loss import TotalLoss
 from options import get_options
 from utils.dataloader import get_dataloader
+from utils.reproducibility import set_seed
 
 
 def collect_scores(model, loader, device):
@@ -125,6 +126,7 @@ def print_metrics(name, metrics, auc):
 
 def main():
     opt = get_options()
+    set_seed(42)
     device = torch.device(opt.device if torch.cuda.is_available() else 'cpu')
 
     model = GANomaly(opt)

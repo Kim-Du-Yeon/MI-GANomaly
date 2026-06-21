@@ -145,3 +145,36 @@
 1. 마스킹만 단독 적용 시 AUC가 하락(0.51→0.42)하는 것을 실험으로 확인 — 단일 기법 추가가 항상 성능을 개선하지 않음을 정량적으로 입증
 2. SSIM 기반 Loss 재설계 결합 시 AUC 0.51→0.62, F1 0.36→0.58로 전 지표 개선 — 마스킹+구조적 유사도 손실의 복합 설계가 핵심 기여
 3. Grad-CAM++로 이상 케이스의 모델 판단 근거(활성화 영역)를 시각적으로 검증해 "정확도 수치"를 넘어 "왜 이상으로 판단했는지" 설명 가능성까지 확보
+
+## 증강 전략 설계 (도메인 특화)
+### 도메인 분석
+- 태양광 패널: 직사각형 격자 구조, 색상이 결함 판단 기준
+- 정상 이미지만 학습하는 Semi-Supervised 구조
+
+### 채택 기법 & 이유
+| 기법 | 이유 |
+|------|------|
+| HorizontalFlip | 패널 좌우 대칭성 |
+| VerticalFlip | 패널 상하 대칭성 |
+| Rotation(±15°) | 촬영 각도 미세 변동 |
+| GaussianBlur(약) | 카메라 초점 변동 모사 |
+| ColorJitter(밝기/대비만) | 조명 조건 변동, 색조 제외 |
+
+### 금지 기법 & 이유
+| 기법 | 금지 이유 |
+|------|----------|
+| RandomErasing | 인위적 결함 생성 → 정상 데이터 오염 |
+| CutMix/MixUp | 존재하지 않는 패턴 생성 |
+| ElasticTransform | 패널 격자 구조 파괴 |
+| ColorJitter(saturation) | 색조 변경 → 결함 판단 기준 훼손 |
+| Rotation(>15°) | 비현실적 구조 왜곡 |
+
+### 실행 결과
+- 원본 452장 → 증강 후 2,712장 (mi_ganomaly/data/train/normal_augmented/, 원본 폴더는 변경하지 않고 별도 폴더에 생성)
+- 기법별 452장씩 균등 배분 (original 452 + 5기법 × 452 = 2,712)
+
+### 이슈
+- pixel_dist_after.png에서 intensity=0 부근에 스파이크 발생 → RandomRotation의 회전 후 빈 모서리가 검은색(fill=0)으로 채워지는 부작용. 실제 결함 판단에 영향 줄 수 있어 Phase 6 이후 fill 값 조정 검토 필요
+
+### 재현성
+- mi_ganomaly/utils/reproducibility.py의 set_seed(42)를 train.py, evaluate.py에 적용 (torch/cuda/numpy/random/cudnn 전부 고정)

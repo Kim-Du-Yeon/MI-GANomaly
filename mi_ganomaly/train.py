@@ -12,6 +12,7 @@ from models.loss import TotalLoss
 from options import get_options
 from utils.dataloader import get_dataloader
 from utils.masking import MAEMasker
+from utils.reproducibility import set_seed
 
 
 def compute_latent_scores(model, loader, device):
@@ -39,6 +40,7 @@ def plot_loss_curve(history, save_dir):
 
 def main():
     opt = get_options()
+    set_seed(42)
     device = torch.device(opt.device if torch.cuda.is_available() else 'cpu')
 
     train_loader, _ = get_dataloader(opt, 'train')
