@@ -249,3 +249,19 @@
 - w_enc: 5.0 → 10.0 (이론값 17 근접)
 - 근거: Loss 스케일 분석 후 단계적 최적화
 - 다음: 학습 후 ctx/enc loss가 recon과 균형 잡히는지 확인
+
+## Loss Ablation 전략 수정 (핵심 발견)
+### 발견
+- mask_type=none에서 ctx_loss=0.0으로 수렴
+- 원인: 정상만 학습 시 feat_real≈feat_fake → Contextual Loss 무효
+- w_ctx를 1.0→100.0으로 올려도 동일 → 가중치 문제 아님
+
+### 포트폴리오 서술 포인트
+"마스킹 없이는 Contextual Loss가 0으로 수렴함을 실험적으로 확인.
+이는 마스킹이 단순한 데이터 증강이 아니라
+Contextual Loss 활성화의 필수 조건임을 증명한다."
+
+### 전략 수정
+- 변경 전: mask_type=none으로 Loss Ablation
+- 변경 후: mask_type=patch (mask_size=8, ratio=0.2) 고정 후 Loss Ablation
+- 가중치: w_ctx/w_enc 1.0으로 원복 (마스킹으로 스케일 문제 해소)
