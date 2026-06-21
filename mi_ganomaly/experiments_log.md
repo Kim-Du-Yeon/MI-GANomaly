@@ -210,3 +210,26 @@
 ### 포트폴리오 서술 방침
 - 보조 기술: 한 문단으로 묶어 처리
 - Loss ablation: 별도 섹션에서 단계별 수치 비교 (핵심)
+
+## isize 32→64 변경 (Week 2)
+### 문제
+- isize=32: 300×300 원본을 32×32로 압축
+- 결함 정보 대부분 소실 → AUC 0.69 한계
+### 해결
+- isize=64로 변경: 결함 정보 보존 4배 증가
+- 기대 AUC 향상: 0.69 → 0.75+ 목표
+### 구현 노트
+- networks.py의 Encoder/Decoder/Discriminator는 while 루프로 pyramid 레이어 수를 isize 기반 동적 계산 (고정 레이어 수 아님) → 코드 수정 없이 isize=64 자동 대응 확인 (pyramid conv 2개→3개, 채널 64→128→256→512, latent nz=500 유지)
+- 기존 Phase1~3 best_model.pth는 isize=32 구조로 저장되어 있어, 해당 체크포인트로 evaluate.py 재실행 시 `--isize 32`를 명시해야 함 (기본값이 64로 바뀌었기 때문)
+
+## WandB 실험 모니터링 연동
+### 적용 이유
+- 터미널 출력만으로는 loss curve 분석 불가
+- 실험별 하이퍼파라미터 자동 기록
+- loss/AUC 실시간 시각화로 모델 동작 분석
+- 포트폴리오: WandB 대시보드 링크 README에 삽입
+
+### 구현 노트
+- train.py: wandb.init(project, name=save_dir 기준, config=vars(opt)), 매 epoch wandb.log(total/recon/ctx/enc loss, test_auc, learning_rate), best 갱신 시 wandb.log(best_auc) 추가, 종료 시 wandb.finish()
+- options.py: --use_wandb(default=True, --no-use_wandb로 비활성화 가능), --wandb_project(default="MI-GANomaly")
+- requirements.txt에 wandb 추가 (실제 경로는 mi_ganomaly/가 아닌 저장소 루트 requirements.txt) — 실행 전 `pip install wandb` 및 `wandb login` 필요

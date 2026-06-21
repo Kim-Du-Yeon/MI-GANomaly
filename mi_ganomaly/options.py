@@ -6,7 +6,7 @@ def get_options():
 
     # 모델
     parser.add_argument('--nz', type=int, default=500, help='latent vector size')
-    parser.add_argument('--isize', type=int, default=32, help='input image size')
+    parser.add_argument('--isize', type=int, default=64, help='input image size')
     parser.add_argument('--nc', type=int, default=3, help='input image channels')
     parser.add_argument('--ndf', type=int, default=64, help='discriminator feature map size')
     parser.add_argument('--ngf', type=int, default=64, help='generator feature map size')
@@ -30,7 +30,7 @@ def get_options():
     # 마스킹 (Phase2 대비)
     # mask_size는 isize보다 작아야 함 (MAEMasker.__init__에서 자동 ValueError 검증,
     # mask_ratio*n_patches가 0으로 내려가면 max(1,n_mask) 보정 + Warning 출력)
-    # isize=32 기준 patch_size=8만 ratio 제어 정상 동작
+    # isize=64 기준 patch_size=8 -> n_patches=64로 더 세밀한 ratio 제어 가능 (isize=32 시절보다 개선)
     parser.add_argument('--mask_size', type=int, default=8, help='mask patch size')
     parser.add_argument('--mask_ratio', type=float, default=0.2, help='mask ratio')
     parser.add_argument('--mask_type', type=str, default='patch', help='mask type')
@@ -42,6 +42,11 @@ def get_options():
 
     # 평가 (Threshold)
     parser.add_argument('--k', type=float, default=2.0, help='auto threshold: mu + k*sigma')
+
+    # WandB
+    parser.add_argument('--use_wandb', action=argparse.BooleanOptionalAction, default=True,
+                         help='enable WandB experiment logging')
+    parser.add_argument('--wandb_project', type=str, default='MI-GANomaly', help='WandB project name')
 
     # 기타
     parser.add_argument('--save_dir', type=str, default='./output', help='output save directory')

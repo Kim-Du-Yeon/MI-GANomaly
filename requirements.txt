@@ -29,3 +29,4 @@ torch==2.11.0+cu128
 torchvision==0.26.0+cu128
 tqdm==4.68.3
 typing_extensions==4.15.0
+wandb  # 실험 모니터링 - 미설치 시 `pip install wandb` 및 `wandb login` 필요

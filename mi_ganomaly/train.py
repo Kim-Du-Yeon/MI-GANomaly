@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import torch
+import wandb  # pip install wandb 필요 (requirements.txt 참고), 미설치 시 import 단계에서 실패
 from sklearn.metrics import roc_auc_score
 from torch import optim
 from torch.nn.utils import clip_grad_norm_
@@ -44,6 +45,10 @@ def main():
     opt = get_options()
     set_seed(42)
     device = torch.device(opt.device if torch.cuda.is_available() else 'cpu')
+
+    if opt.use_wandb:
+        run_name = os.path.basename(os.path.normpath(opt.save_dir))
+        wandb.init(project=opt.wandb_project, name=run_name, config=vars(opt))
 
     train_loader, _ = get_dataloader(opt, 'train')
     test_loader, test_labels = get_dataloader(opt, 'test')
@@ -110,6 +115,16 @@ def main():
         auc = roc_auc_score(test_labels.numpy(), scores.numpy())
         print(f'[Epoch {epoch + 1}/{opt.n_epochs}] test AUC={auc:.4f}')
 
+        if opt.use_wandb:
+            wandb.log({
+                'total_loss': history['total'][-1],
+                'recon_loss': history['recon'][-1],
+                'ctx_loss': history['ctx'][-1],
+                'enc_loss': history['enc'][-1],
+                'test_auc': auc,
+                'learning_rate': optimizer.param_groups[0]['lr'],
+            }, step=epoch + 1)
+
         torch.save(model.state_dict(), os.path.join(ckpt_dir, f'epoch_{epoch + 1}.pth'))
 
         if auc > best_auc:
@@ -117,6 +132,8 @@ def main():
             best_epoch = epoch + 1
             epochs_no_improve = 0
             torch.save(model.state_dict(), os.path.join(opt.save_dir, 'best_model.pth'))
+            if opt.use_wandb:
+                wandb.log({'best_auc': auc}, step=epoch + 1)
         else:
             epochs_no_improve += 1
 
@@ -134,6 +151,9 @@ def main():
     with open(os.path.join(opt.save_dir, 'convergence.txt'), 'w') as f:
         f.write(f'converged_epoch={converged_epoch}\nbest_epoch={best_epoch}\nbest_auc={best_auc:.4f}\n')
     print(f'[Convergence] converged_epoch={converged_epoch} best_epoch={best_epoch} best_auc={best_auc:.4f}')
+
+    if opt.use_wandb:
+        wandb.finish()
 
 
 if __name__ == '__main__':
