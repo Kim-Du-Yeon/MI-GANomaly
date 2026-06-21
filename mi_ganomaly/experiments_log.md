@@ -311,3 +311,10 @@ Loss 스케일 불균형으로 인해 ctx/enc Loss가 gradient에
   1. w_ctx=50, w_enc=5 절충값 재실험
   2. Loss 정규화 (각 loss를 초기값으로 나눠 스케일 통일)
   3. gradient 균형 기법 (GradNorm) 적용 검토
+
+## Loss Ablation v4 - 가중치 정규화 재실험
+### 설정
+- w_recon=1.0, w_ctx=50.0, w_enc=5.0
+- 근거: v3에서 ctx/enc gradient 기여 0 확인 → 절충값 적용
+- mask_type=patch, mask_size=8, ratio=0.2 고정
+- isize=64, seed=42 고정

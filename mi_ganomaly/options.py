@@ -37,11 +37,10 @@ def get_options():
 
     # 손실 가중치
     parser.add_argument('--w_recon', type=float, default=1.0, help='reconstruction loss weight')
-    # 가중치 스케일 실험 결과: mask_type=none에서 ctx/enc loss가 0으로 수렴
-    # 마스킹 없이는 feat_real≈feat_fake → ctx_loss 무효
-    # Loss Ablation은 mask_type=patch로 진행
-    parser.add_argument('--w_ctx', type=float, default=1.0, help='contextual loss weight')
-    parser.add_argument('--w_enc', type=float, default=1.0, help='encoder loss weight')
+    # Loss 정규화 절충값: ctx(0.00028) vs recon(0.14) 균형
+    # 이론값(1500) 대비 점진적 접근, v3 w=1.0 실패 후 조정
+    parser.add_argument('--w_ctx', type=float, default=50.0, help='contextual loss weight')
+    parser.add_argument('--w_enc', type=float, default=5.0, help='encoder loss weight')
     parser.add_argument('--recon_alpha', type=float, default=1.0,
                          help='ReconLoss MSE/SSIM blend: 1.0=MSE only, 0.5=MSE+SSIM')
 
