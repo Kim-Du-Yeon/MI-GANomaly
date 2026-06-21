@@ -1,0 +1,3 @@
+converged_epoch=22
+best_epoch=2
+best_auc=0.7034
