@@ -44,7 +44,7 @@ def run_experiment(opt, mask_size, mask_ratio, device):
     test_loader, _ = get_dataloader(opt, 'test')
 
     model = GANomaly(opt)
-    model.criterion = TotalLoss(opt, recon_alpha=1.0)
+    model.criterion = TotalLoss(opt, recon_alpha=opt.recon_alpha)
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
     masker = MAEMasker(patch_size=opt.mask_size, mask_ratio=opt.mask_ratio, isize=opt.isize).to(device)
