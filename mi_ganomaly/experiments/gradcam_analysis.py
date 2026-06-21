@@ -14,8 +14,8 @@ from utils.dataloader import get_dataloader
 from utils.gradcam import GradCAMPlusPlus
 from utils.visualize import save_gradcam
 
-CKPT_DIR = 'output/phase3_ssim'
-OUT_DIR = 'output/phase4_gradcam'
+CKPT_DIR = 'output/final_best'
+OUT_DIR = 'output/final_best/gradcam'
 N_SAMPLES = 5
 
 
@@ -34,10 +34,15 @@ def collect_scores_with_images(model, dataset, device):
 
 def main():
     opt = get_options()
+    opt.dataroot = 'mi_ganomaly/data'
+    opt.isize = 64
+    opt.recon_alpha = 0.793
+    opt.w_ctx = 8.46
+    opt.w_enc = 16.31
     device = torch.device(opt.device if torch.cuda.is_available() else 'cpu')
 
     model = GANomaly(opt)
-    model.criterion = TotalLoss(opt, recon_alpha=0.5)  # Phase 3 setting
+    model.criterion = TotalLoss(opt, recon_alpha=opt.recon_alpha)  # Optuna best (final_best)
     model = model.to(device)
     model.load_state_dict(torch.load(os.path.join(CKPT_DIR, 'best_model.pth'), map_location=device))
     model.eval()
