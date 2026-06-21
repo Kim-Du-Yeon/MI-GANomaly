@@ -25,7 +25,10 @@ def get_options():
     parser.add_argument('--workers', type=int, default=4, help='number of dataloader workers')
 
     # 마스킹 (Phase2 대비)
-    parser.add_argument('--mask_size', type=int, default=16, help='mask patch size')
+    # mask_size는 isize보다 작아야 함 (MAEMasker.__init__에서 자동 ValueError 검증,
+    # mask_ratio*n_patches가 0으로 내려가면 max(1,n_mask) 보정 + Warning 출력)
+    # isize=32 기준 patch_size=8만 ratio 제어 정상 동작
+    parser.add_argument('--mask_size', type=int, default=8, help='mask patch size')
     parser.add_argument('--mask_ratio', type=float, default=0.2, help='mask ratio')
     parser.add_argument('--mask_type', type=str, default='patch', help='mask type')
 

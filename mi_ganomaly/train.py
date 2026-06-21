@@ -11,6 +11,7 @@ from models.ganomaly import GANomaly
 from models.loss import TotalLoss
 from options import get_options
 from utils.dataloader import get_dataloader
+from utils.masking import MAEMasker
 
 
 def compute_latent_scores(model, loader, device):
@@ -48,6 +49,10 @@ def main():
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
+    masker = None
+    if opt.mask_type != 'none':
+        masker = MAEMasker(patch_size=opt.mask_size, mask_ratio=opt.mask_ratio, isize=opt.isize).to(device)
+
     ckpt_dir = os.path.join(opt.save_dir, 'checkpoints')
     os.makedirs(ckpt_dir, exist_ok=True)
 
@@ -60,8 +65,9 @@ def main():
 
         for i, (x, _) in enumerate(train_loader):
             x = x.to(device)
+            masked_x = masker(x)[0] if masker is not None else x
 
-            x_hat, z, z_hat, feat_real, feat_fake = model(x)
+            x_hat, z, z_hat, feat_real, feat_fake = model(masked_x)
             total, l_recon, l_ctx, l_enc = model.criterion(x, x_hat, feat_real, feat_fake, z, z_hat)
 
             optimizer.zero_grad()
