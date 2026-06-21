@@ -233,3 +233,13 @@
 - train.py: wandb.init(project, name=save_dir 기준, config=vars(opt)), 매 epoch wandb.log(total/recon/ctx/enc loss, test_auc, learning_rate), best 갱신 시 wandb.log(best_auc) 추가, 종료 시 wandb.finish()
 - options.py: --use_wandb(default=True, --no-use_wandb로 비활성화 가능), --wandb_project(default="MI-GANomaly")
 - requirements.txt에 wandb 추가 (실제 경로는 mi_ganomaly/가 아닌 저장소 루트 requirements.txt) — 실행 전 `pip install wandb` 및 `wandb login` 필요
+
+## Loss 가중치 불균형 이슈 발견 (Week 2)
+### 문제
+- ctx_loss=0.0001, enc_loss=0.009 vs recon_loss=0.15
+- w=1.0으로 동일 가중치여도 recon이 실질적으로 학습 지배
+- Step 1(MSE only)과 Step 2(MSE+SSIM) AUC 동일 → Loss 균형 문제
+### 해결
+- w_ctx: 1.0 → 10.0
+- w_enc: 1.0 → 5.0
+- Loss 스케일 균형 후 재실험

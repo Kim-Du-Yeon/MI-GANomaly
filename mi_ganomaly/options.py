@@ -37,8 +37,10 @@ def get_options():
 
     # 손실 가중치
     parser.add_argument('--w_recon', type=float, default=1.0, help='reconstruction loss weight')
-    parser.add_argument('--w_ctx', type=float, default=1.0, help='contextual loss weight')
-    parser.add_argument('--w_enc', type=float, default=1.0, help='encoder loss weight')
+    # w_ctx/w_enc 상향: ctx_loss(~0.0001)/enc_loss(~0.009)가 recon_loss(~0.15)보다
+    # 스케일이 훨씬 작아 w=1.0이면 gradient에 거의 기여하지 못함 (부분 보정)
+    parser.add_argument('--w_ctx', type=float, default=10.0, help='contextual loss weight')
+    parser.add_argument('--w_enc', type=float, default=5.0, help='encoder loss weight')
     parser.add_argument('--recon_alpha', type=float, default=1.0,
                          help='ReconLoss MSE/SSIM blend: 1.0=MSE only, 0.5=MSE+SSIM')
 
