@@ -407,3 +407,9 @@ Loss 재설계, Bayesian Optimization을 단계적으로 적용해
 AUC 0.71, F1 0.68을 달성했다. 
 특히 Threshold 분석을 통해 태양광 패널 결함 탐지에서
 Recall을 우선시하는 sweep 방식이 실무적으로 더 적합함을 확인했다."
+
+## Week 3 시작 - 시각화 및 분석
+### GitHub 이미지 업로드
+- .gitignore 수정: output/*.png 추적 허용
+- 업로드 대상: 최종 모델 평가 결과 PNG
+- 목적: 포트폴리오 README에 figure 삽입

@@ -8,8 +8,10 @@ __pycache__/
 # virtual environment
 .venv/
 
-# training outputs
-output/
+# training outputs: PNG/TXT 결과물(시각화, convergence 등)은 GitHub에 추적,
+# 가중치/런타임 로그는 용량 문제로 계속 제외
+output/**/*.pth
+output/**/wandb/
 
 # WandB local run logs
 wandb/
