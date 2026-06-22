@@ -70,18 +70,32 @@ def plot_tsne(latents, labels, save_path):
 
 
 def plot_covariance(latents, labels, save_path):
-    cov_normal = np.cov(latents[labels == 0], rowvar=False)
-    cov_anomaly = np.cov(latents[labels == 1], rowvar=False)
-    vmax = max(np.abs(cov_normal).max(), np.abs(cov_anomaly).max())
+    """정상/이상 latent 공분산 행렬 비교 시각화"""
+    normal = latents[labels == 0]
+    anomaly = latents[labels == 1]
 
-    fig, axes = plt.subplots(1, 2, figsize=(11, 5))
-    axes[0].imshow(cov_normal, cmap='coolwarm', vmin=-vmax, vmax=vmax)
-    axes[0].set_title('Normal latent covariance')
-    im1 = axes[1].imshow(cov_anomaly, cmap='coolwarm', vmin=-vmax, vmax=vmax)
-    axes[1].set_title('Anomaly latent covariance')
-    fig.colorbar(im1, ax=axes, fraction=0.025)
-    plt.savefig(save_path, dpi=DPI)
+    # PCA로 500→32 차원 축소 후 공분산 계산 (500×500 행렬은 시각화 불가)
+    pca = PCA(n_components=32)
+    pca.fit(latents)
+    normal_r = pca.transform(normal)
+    anomaly_r = pca.transform(anomaly)
+
+    cov_normal = np.cov(normal_r.T)    # (32,32)
+    cov_anomaly = np.cov(anomaly_r.T)  # (32,32)
+    cov_diff = np.abs(cov_normal - cov_anomaly)
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    for ax, mat, title in zip(axes,
+        [cov_normal, cov_anomaly, cov_diff],
+        ['Normal Covariance', 'Anomaly Covariance', 'Absolute Difference']):
+        im = ax.imshow(mat, cmap='viridis')
+        ax.set_title(title)
+        plt.colorbar(im, ax=ax)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
+    print(f"[Covariance] saved → {save_path}")
 
 
 def append_to_log(latents, labels, score):
@@ -107,7 +121,7 @@ def main():
 
     plot_pca(latents, labels, os.path.join(opt.save_dir, 'pca_latent.png'))
     plot_tsne(latents, labels, os.path.join(opt.save_dir, 'tsne_latent.png'))
-    plot_covariance(latents, labels, os.path.join(opt.save_dir, 'covariance_matrix.png'))
+    plot_covariance(latents, labels, save_path="mi_ganomaly/results/covariance_map.png")
 
     score = silhouette_score(latents, labels)
     print(f'[Silhouette] score={score:.4f}')
