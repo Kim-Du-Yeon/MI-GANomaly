@@ -540,3 +540,13 @@ Loss 재설계와 가중치 최적화의 시너지 효과를 실험적으로 증
 | multi_8_16_32 | [8, 16, 32] | 0.6995 |
 
 **Best 조합**: single_8 ([8]) AUC=0.7082
+
+## Latent Space 분석 (PCA / t-SNE / 공분산 / Silhouette)
+- latent shape: (2172, 500), normal=1056, anomaly=1116
+- Silhouette Score (정상 vs 이상): 0.0304
+
+## PCA 기반 공분산 행렬 시각화 (멘토 피드백 반영)
+- 목적: 정상/이상 latent 분포의 글로벌 패턴 차이 시각적 근거 제시
+- 방법: latent(N,500) → PCA 32차원 축소 → 정상/이상 공분산(32×32) + 절댓값 차이 3-패널
+- 결과: covariance_map.png 생성, Silhouette=0.0304 재확인
+- 포트폴리오 포인트: 단순 분류 성능 외 latent space 구조 차이를 공분산으로 정량화
